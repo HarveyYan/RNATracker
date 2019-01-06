@@ -1,10 +1,10 @@
 # RNATracker
 
-RNATracker is a deep learning approach aimed at inferring mRNA localization patterns.
-It operates on the complemetary DNA sequence of a gene with or without its corresponding secondary structure annnotations.
-The learning targets are distribution ratios (probability mass) of the localization to a fixed set of subcellular compartments of interest, e.g. ctyoplasm, insoluble, membrane and nucleus.
+RNATracker is a deep learning approach to learn mRNA subcellular localization patterns and to infer its outcome.
+It operates on the cDNA of the longest isoformic protein-coding transcript of a gene with or without its corresponding secondary structure annnotations.
+The learning targets are fractions/percentage of the transcripts being localized to a fixed set of subcellular compartments of interest.
 
-Our work provides computational centric insights into the understanding of mRNA localization, by the simplfied assumption of identifying cis-acting zipcodes in the sequences. 
+Our method provides computational-centric insights into the the mRNA trafficking mechanism with identication to the cis-acting zipcodes elements from the transcript sequences. 
 
 For what's exactly the RNA trafficking mechanism and its role in the broader gene regulatory network,
 I find this survey extremely helpful.
@@ -13,16 +13,16 @@ I find this survey extremely helpful.
 
 ## Dataset
 
-[Cefra-Seq](https://www.ncbi.nlm.nih.gov/pubmed/28579403)
+- [Cefra-Seq](https://www.ncbi.nlm.nih.gov/pubmed/28579403) which provides localization targets for cytoplasm, insoluble, membrane and nucleus.
 
-[APEX-RIP](https://www.ncbi.nlm.nih.gov/pubmed/29239719) 
+- [APEX-RIP](https://www.ncbi.nlm.nih.gov/pubmed/29239719) on KDEL(endoplasmic reticulum), Mito(Mitochdrial), NES (cytosol) and NCL (Nucleus)
 
-Other emerging APEX technologies such as the APEX-Seq will be included into the analysis once their results become accessible in the GEO dataset repository. 
+Other emerging read-mapping technologies investigating subcellular zipcode proximity might provide additional dataset. 
 
 ## Software dependencies
 
-[Keras](https://github.com/keras-team/keras) The deep learning framework for humans. The idea
- can also be easily adapted to other deep leaing frameworks such as Tensorflow or PyTorch. 
+[Keras](https://github.com/keras-team/keras) Version 2.0.9 is recommeneded. The idea
+ can be easily adapted to other deep leaing frameworks such as Tensorflow or PyTorch. 
 
 RNAplfold and forgi libraries from the [ViennaRNA package](https://www.tbi.univie.ac.at/RNA/) and their python wrapper [Eden](https://github.com/fabriziocosta/EDeN) for acquiring RNA secondary annotations.
 
@@ -31,14 +31,6 @@ RNAplfold and forgi libraries from the [ViennaRNA package](https://www.tbi.univi
 [Weblogo](https://weblogo.berkeley.edu/logo.cgi) and its python wrapper [Basset](https://github.com/davek44/Basset) for visualizing learned motifs.
 
 
-## Running the RNATracker
+## Notes
 
-Placeholder
-
-## Remarks
-
-The raw localization targets measured in FPKM units, tend to be very noisy.
-
-To process all natural mRNA sequences is capped the computational bottleneck of LSTMs.
-
-We cannot acquire reliable mRNA secondary structures, due to the insufficient understanding of this matter. 
+The secondary structures are acquired using the [codes](https://github.com/HarveyYan/mRNA-secondary-structure-annotater) 

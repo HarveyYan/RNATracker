@@ -30,7 +30,21 @@ RNAplfold and forgi libraries from the [ViennaRNA package](https://www.tbi.univi
 
 [Weblogo](https://weblogo.berkeley.edu/logo.cgi) and its python wrapper [Basset](https://github.com/davek44/Basset) for visualizing learned motifs.
 
+## Run the codes
+
+- Scripts/RNATracker.py<br></br>
+    - Main experiment entry<br></br>
+    - Use `python3 Scripts/RNATracker.py -h` to get a comprehensive list of experiment parameters<br></br>
+    - For model definitions refer to Models/cnn_bilstm_attention.py
+- Scripts/SGDModel.py<br></br>
+    - Experiment without padding or truncation
+- Scripts/mask_test.py<br></br>
+    - Mask test to identify zipcodes with a sufficiently trained RNATracker model
+- Transcript_Coordinates_Mapping/get_conservation_scores.py<br></br>
+    - A script to prepare conseration scores for the downstream mask test
+    - Highly recommend downloading **Homo_sapiens.GRCh38.cdna.all.fa** from the ensembl website, to be further saved under the **Data** directory
+    
 
 ## Notes
 
-The secondary structures are acquired using the [codes](https://github.com/HarveyYan/mRNA-secondary-structure-annotater) 
+For secondary structures refer to this customized [annotator](https://github.com/HarveyYan/mRNA-secondary-structure-annotater) 

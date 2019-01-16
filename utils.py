@@ -567,8 +567,8 @@ def violin_plot(dataset):
 
 
 if __name__ == "__main__":
-    screen_cefra_seq_from_ensembl_file()
-    exit()
+    # screen_cefra_seq_from_ensembl_file()
+    # exit()
     # get_kmer_features('./Data/apex-rip/apex_rip_cDNA_screened.fa', 'kmer_apex.csv', 5)
     # get_kmer_features('./data/cDNA/ensembl_cDNA_screened.fa', 'kmer_feature.csv', 5)
     # count_mode_change()
@@ -580,69 +580,76 @@ if __name__ == "__main__":
     violin_plot('apex-rip')
 
     '''cefra-seq'''
-    compare_roc(['./Results/RNATracker-10foldcv/cefra-seq/2018-08-17-18-20-51-new_split/',
-                 './Results/SeparateEncoding-10foldcv/cefra-seq/2018-08-17-00-30-17-no-bn/',
-                 './Results/RNATracker-10foldcv/cefra-seq/2018-08-18-18-52-51-new_split_ann_joint_encoding/',
-                 './Results/RNATracker-10foldcv/cefra-seq/2018-08-18-19-08-14-new_split_no_attention/',
-                 './Results/kmer-baseline-10foldcv/cefra-seq/2018-12-21-16-59-37-LR-5Mer-cefra-seq/',
-                 './Results/kmer-baseline-10foldcv/cefra-seq/2018-12-21-16-09-27-NN-5Mer-cefra-seq/',
-                 ],
-                ['RNATracker-SeqOnly', 'RNATracker-Seq+Struct', 'RNATracker-SeqxStruct', 'no-attention', 'LR-5Mer',
-                 'NN-5Mer']
-                , './Graph/cefra-seq-10foldcv-compare-roc.png',
-                title='Micro-averaged ROC')
+    compare_roc([
+        './Results/SGDModel-10foldcv/cefra-seq/2019-01-08-11-14-51-cnn_bilstm-adam/',
+        './Results/SGDModel-10foldcv/cefra-seq/2018-12-28-18-03-18-cnn-four-cnn/',
+        './Results/kmer-baseline-10foldcv/cefra-seq/2018-12-21-16-59-37-LR-5Mer-cefra-seq/',
+        './Results/kmer-baseline-10foldcv/cefra-seq/2018-12-21-16-09-27-NN-5Mer-cefra-seq/',
+        './Results/RNATracker-10foldcv/cefra-seq/2018-08-17-18-20-51-new_split/',
+        './Results/RNATracker-10foldcv/cefra-seq/2018-08-18-19-08-14-new_split_no_attention/',
+        './Results/SeparateEncoding-10foldcv/cefra-seq/2018-08-17-00-30-17-no-bn/',
+        './Results/RNATracker-10foldcv/cefra-seq/2018-08-18-18-52-51-new_split_ann_joint_encoding/',],
+        ['RNATracker-FullLength', 'NoLSTM', 'LR-5Mer', 'NN-5Mer', 'RNATracker-FixedLength', 'NoAttention', 'Seq+Struct',
+         'SeqxStruct']
+        , './Graph/cefra-seq-10foldcv-compare-roc.png',
+        title='Micro-averaged ROC')
 
-    compare_pr(['./Results/RNATracker-10foldcv/cefra-seq/2018-08-17-18-20-51-new_split/',
-                './Results/SeparateEncoding-10foldcv/cefra-seq/2018-08-17-00-30-17-no-bn/',
-                './Results/RNATracker-10foldcv/cefra-seq/2018-08-18-18-52-51-new_split_ann_joint_encoding/',
-                './Results/RNATracker-10foldcv/cefra-seq/2018-08-18-19-08-14-new_split_no_attention/',
-                './Results/kmer-baseline-10foldcv/cefra-seq/2018-12-21-16-59-37-LR-5Mer-cefra-seq/',
-                './Results/kmer-baseline-10foldcv/cefra-seq/2018-12-21-16-09-27-NN-5Mer-cefra-seq/',
-                ],
-               ['RNATracker-SeqOnly', 'RNATracker-Seq+Struct', 'RNATracker-SeqxStruct', 'no-attention', 'LR-5Mer',
-                'NN-5Mer']
-               , './Graph/cefra-seq-10foldcv-compare-pr.png',
-               title='Micro-averaged PR')
+    compare_pr([
+        './Results/SGDModel-10foldcv/cefra-seq/2019-01-08-11-14-51-cnn_bilstm-adam/',
+        './Results/SGDModel-10foldcv/cefra-seq/2018-12-28-18-03-18-cnn-four-cnn/',
+        './Results/kmer-baseline-10foldcv/cefra-seq/2018-12-21-16-59-37-LR-5Mer-cefra-seq/',
+        './Results/kmer-baseline-10foldcv/cefra-seq/2018-12-21-16-09-27-NN-5Mer-cefra-seq/',
+        './Results/RNATracker-10foldcv/cefra-seq/2018-08-17-18-20-51-new_split/',
+        './Results/RNATracker-10foldcv/cefra-seq/2018-08-18-19-08-14-new_split_no_attention/',
+        './Results/SeparateEncoding-10foldcv/cefra-seq/2018-08-17-00-30-17-no-bn/',
+        './Results/RNATracker-10foldcv/cefra-seq/2018-08-18-18-52-51-new_split_ann_joint_encoding/',],
+        ['RNATracker-FullLength', 'NoLSTM', 'LR-5Mer', 'NN-5Mer', 'RNATracker-FixedLength', 'NoAttention', 'Seq+Struct',
+         'SeqxStruct']
+        , './Graph/cefra-seq-10foldcv-compare-pr.png',
+        title='Micro-averaged PR')
 
-    multiclass_roc('./Results/RNATracker-10foldcv/cefra-seq/2018-08-17-18-20-51-new_split/',
-                   './Graph/RNATracker-cefra-seq-roc.png', title='ROC by location of RNATracker-SeqOnly')
+    multiclass_roc('./Results/SGDModel-10foldcv/cefra-seq/2019-01-08-11-14-51-cnn_bilstm-adam/',
+                   './Graph/RNATracker-cefra-seq-roc.png', title='ROC by location for RNATracker-FullLength')
 
-    multiclass_pr('./Results/RNATracker-10foldcv/cefra-seq/2018-08-17-18-20-51-new_split/',
-                  './Graph/RNATracker-cefra-seq-pr.png', title='PR by location of RNATracker-SeqOnly')
+    multiclass_pr('./Results/SGDModel-10foldcv/cefra-seq/2019-01-08-11-14-51-cnn_bilstm-adam/',
+                  './Graph/RNATracker-cefra-seq-pr.png', title='PR by location for RNATracker-FullLength')
 
     '''apex-rip'''
-    compare_roc(['./Results/RNATracker-10foldcv/apex-rip/2018-12-20-19-31-47-apex-rip-no-reg/',
-                 './Results/SeparateEncoding-10foldcv/apex-rip/2018-12-23-23-12-54/',
-                 './Results/RNATracker-10foldcv/apex-rip/2018-12-22-11-35-50-apex-rip-with-annotations/',
-                 './Results/RNATracker-10foldcv/apex-rip/2018-12-21-17-32-22-no_att/',
-                 './Results/kmer-baseline-10foldcv/apex-rip/2018-12-21-16-57-54-LR-5Mer-apex-rip/',
-                 './Results/kmer-baseline-10foldcv/apex-rip/2018-12-21-16-25-32-NN-5Mer-apex-rip/',
-                 ],
-                ['RNATracker-SeqOnly', 'RNATracker-Seq+Struct', 'RNATracker-SeqxStruct', 'no-attention', 'LR-5Mer',
-                 'NN-5Mer']
-                , './Graph/apex-rip-10foldcv-compare-roc.png',
-                title='Micro-averaged ROC')
+    compare_roc([
+        './Results/SGDModel-10foldcv/apex-rip/2019-01-04-16-36-23-cnn_bilstm-adam/',
+        './Results/SGDModel-10foldcv/apex-rip/2018-12-22-22-00-37-cnn-four-cnn/',
+        './Results/kmer-baseline-10foldcv/apex-rip/2018-12-21-16-57-54-LR-5Mer-apex-rip/',
+        './Results/kmer-baseline-10foldcv/apex-rip/2018-12-21-16-25-32-NN-5Mer-apex-rip/',
+        './Results/RNATracker-10foldcv/apex-rip/2018-12-20-19-31-47-apex-rip-no-reg/',
+        './Results/RNATracker-10foldcv/apex-rip/2018-12-21-17-32-22-no_att/',
+        './Results/SeparateEncoding-10foldcv/apex-rip/2018-12-23-23-12-54/',
+        './Results/RNATracker-10foldcv/apex-rip/2018-12-22-11-35-50-apex-rip-with-annotations/',],
+        ['RNATracker-FullLength', 'NoLSTM', 'LR-5Mer', 'NN-5Mer', 'RNATracker-FixedLength', 'NoAttention', 'Seq+Struct',
+         'SeqxStruct']
+        , './Graph/apex-rip-10foldcv-compare-roc.png',
+        title='Micro-averaged ROC')
 
-    compare_pr(['./Results/RNATracker-10foldcv/apex-rip/2018-12-20-19-31-47-apex-rip-no-reg/',
-                 './Results/SeparateEncoding-10foldcv/apex-rip/2018-12-23-23-12-54/',
-                 './Results/RNATracker-10foldcv/apex-rip/2018-12-22-11-35-50-apex-rip-with-annotations/',
-                 './Results/RNATracker-10foldcv/apex-rip/2018-12-21-17-32-22-no_att/',
-                 './Results/kmer-baseline-10foldcv/apex-rip/2018-12-21-16-57-54-LR-5Mer-apex-rip/',
-                 './Results/kmer-baseline-10foldcv/apex-rip/2018-12-21-16-25-32-NN-5Mer-apex-rip/',
-                 ],
-                ['RNATracker-SeqOnly', 'RNATracker-Seq+Struct', 'RNATracker-SeqxStruct', 'no-attention', 'LR-5Mer',
-                 'NN-5Mer']
-                , './Graph/apex-rip-10foldcv-compare-pr.png',
-                title='Micro-averaged PR')
+    compare_pr([
+        './Results/SGDModel-10foldcv/apex-rip/2019-01-04-16-36-23-cnn_bilstm-adam/',
+        './Results/SGDModel-10foldcv/apex-rip/2018-12-22-22-00-37-cnn-four-cnn/',
+        './Results/kmer-baseline-10foldcv/apex-rip/2018-12-21-16-57-54-LR-5Mer-apex-rip/',
+        './Results/kmer-baseline-10foldcv/apex-rip/2018-12-21-16-25-32-NN-5Mer-apex-rip/',
+        './Results/RNATracker-10foldcv/apex-rip/2018-12-20-19-31-47-apex-rip-no-reg/',
+        './Results/RNATracker-10foldcv/apex-rip/2018-12-21-17-32-22-no_att/',
+        './Results/SeparateEncoding-10foldcv/apex-rip/2018-12-23-23-12-54/',
+        './Results/RNATracker-10foldcv/apex-rip/2018-12-22-11-35-50-apex-rip-with-annotations/',],
+        ['RNATracker-FullLength', 'NoLSTM', 'LR-5Mer', 'NN-5Mer', 'RNATracker-FixedLength', 'NoAttention', 'Seq+Struct',
+         'SeqxStruct']
+        , './Graph/apex-rip-10foldcv-compare-pr.png',
+        title='Micro-averaged PR')
 
-    multiclass_roc('./Results/RNATracker-10foldcv/apex-rip/2018-12-20-19-31-47-apex-rip-no-reg/',
-                   './Graph/RNATracker-apex-rip-roc.png', title='ROC by location of RNATracker-SeqOnly',
+    multiclass_roc('./Results/SGDModel-10foldcv/apex-rip/2019-01-04-16-36-23-cnn_bilstm-adam/',
+                   './Graph/RNATracker-apex-rip-roc.png', title='ROC by location for RNATracker-FullLength',
                    locations=['KDEL', 'Mito', 'NES', 'NCL'])
 
-    multiclass_pr('./Results/RNATracker-10foldcv/apex-rip/2018-12-20-19-31-47-apex-rip-no-reg/',
-                  './Graph/RNATracker-apex-rip-pr.png', title='PR by location of RNATracker-SeqOnly',
+    multiclass_pr('./Results/SGDModel-10foldcv/apex-rip/2019-01-04-16-36-23-cnn_bilstm-adam/',
+                  './Graph/RNATracker-apex-rip-pr.png', title='PR by location for RNATracker-FullLength',
                   locations=['KDEL', 'Mito', 'NES', 'NCL'])
-
 
     '''new cDNA data batch, a little bit better'''
     #

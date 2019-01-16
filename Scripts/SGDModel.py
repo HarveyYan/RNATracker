@@ -91,7 +91,7 @@ OUTPATH = os.path.join(basedir,
                        'Results/SGDModel-10foldcv/' + args.dataset + '/' + str(datetime.datetime.now()).split('.')[0]
                        .replace(':', '-').replace(' ', '-') + '-' + args.model + '-' + args.message + '/')
 
-# OUTPATH = '/mnt/mirror/data/zichao/mRNALocalization/Results/SGDModel-10foldcv/apex-rip/2019-01-04-16-36-23-cnn_bilstm-adam/'
+# OUTPATH = '/mnt/mirror/data/zichao/mRNALocalization/Results/SGDModel-10foldcv/2019-01-07-16-40-09-cnn_bilstm-rmsprop/'
 
 if not os.path.exists(OUTPATH):
     os.makedirs(OUTPATH)
@@ -156,7 +156,6 @@ def cnn_bilstm_model(pooling_size=3, nb_filters=32, filters_length=10, lstm_unit
     preds = Dense(nb_classes, activation='softmax')(output)
     model = Model(inputs=[input], outputs=preds)
     from keras import optimizers
-    # optim = optimizers.rmsprop()
     optim = optimizers.adam(lr=0.0001)
     # optim = optimizers.sgd(lr=0.001)
     model.compile(

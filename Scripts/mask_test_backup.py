@@ -2,7 +2,7 @@
 import datetime
 from collections import OrderedDict
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 import sys
 import matplotlib
 import matplotlib.pyplot as plt
@@ -23,6 +23,7 @@ parser.add_argument("--kl_sig", type=float, default=0.0106, help="Extract zipcod
 args = parser.parse_args()
 
 plt.style.use('ggplot')
+# matplotlib.rcParams.update({'figure.dpi': 350})
 matplotlib.rcParams.update({'font.family': 'Times New Roman', 'font.size': 18, 'font.weight': 'light', 'figure.dpi': 350})
 
 basedir = os.path.split(os.path.dirname(os.path.abspath(__file__)))[0]
@@ -36,81 +37,9 @@ sess = tf.Session(config=config)
 from keras.backend.tensorflow_backend import set_session
 set_session(session=sess)
 
-from keras.layers.core import Dense, Dropout
-from keras.layers.convolutional import Convolution1D, MaxPooling1D
-from keras.layers import Embedding, LSTM, Bidirectional, Input, Multiply, Activation, Lambda
-from keras.models import Model
-from keras import backend as K
-from keras.initializers import random_normal
-
-def cnn_bilstm_model(pooling_size=3, nb_filters=32, filters_length=10, lstm_units=32, attention_size=50):
-    '''build model'''
-    input = Input(shape=(None,), dtype='int8')
-    embedding_layer = Embedding(len(encoding_vectors), len(encoding_vectors[0]), weights=[encoding_vectors],
-                                input_length=None, trainable=False)
-    embedding_output = embedding_layer(input)
-    with tf.name_scope('first_cnn'):
-        # first cnn layer
-        cnn_output = Dropout(0.2)(MaxPooling1D(pool_length=pooling_size, stride=pooling_size)(
-            Convolution1D(nb_filters, filters_length, border_mode='same', activation='relu', input_shape=(None, 24))(
-                embedding_output))
-            # output shape is in (batch_size, steps, filters), normalizing over the feature axis which is -1
-        )
-    with tf.name_scope('Second_cnn'):
-        # stack another cnn layer on top
-        cnn_output = Dropout(0.2)(MaxPooling1D(pool_length=pooling_size, stride=pooling_size)(
-            Convolution1D(nb_filters, filters_length, border_mode='same', activation='relu')(cnn_output))
-        )
-
-    with tf.name_scope('Third_cnn'):
-        # stack another cnn layer on top
-        cnn_output = Dropout(0.2)(MaxPooling1D(pool_length=pooling_size, stride=pooling_size)(
-            Convolution1D(nb_filters, filters_length, border_mode='same', activation='relu')(cnn_output))
-        )
-
-    with tf.name_scope('Fourth_cnn'):
-        # stack another cnn layer on top
-        cnn_output = Dropout(0.2)(MaxPooling1D(pool_length=pooling_size, stride=pooling_size)(
-            Convolution1D(nb_filters, filters_length, border_mode='same', activation='relu')(cnn_output))
-        )
-
-    with tf.name_scope('bilstm_layer'):
-        lstm_output = Bidirectional(LSTM(lstm_units, dropout=0.1, return_sequences=True,
-                                         input_shape=(None, nb_filters)))(cnn_output)
-        # output shape: (batch_size, time steps, hidden size=2*nb_filters)
-
-    hidden_size = lstm_output.get_shape()[2].value
-    print('hidden size:', hidden_size)
-
-    with tf.name_scope('attention_module'):
-        # [batch_size, time_steps, attention_size]
-        context_weights = Dense(attention_size, activation='tanh',
-                                kernel_initializer=random_normal(), bias_initializer=random_normal())(lstm_output)
-        # [batch_size, time_steps]
-        scores = Lambda(lambda x: K.batch_flatten(x))(
-            Dense(1, kernel_initializer=random_normal(), use_bias=False)(context_weights))
-
-        # softmax probability distribution, [batch_size, sequence_length]
-        attention_weights = Lambda(lambda x: K.expand_dims(x, axis=-1))(Activation("softmax")(scores))
-
-        # Multiply() behaves exactly as tf.multiply() which supports shape broadcasting, so its output_shape is [batch_size, time_steps, hidden_size]
-        # Lambda(lambda x: K.sum(x, axis=1, keepdims=False)) is equivalent to tf.reduce_sum(axis=1)
-        # [batch_size, hidden]
-        output = Lambda(lambda x: K.sum(x, axis=1, keepdims=False))(Multiply()([lstm_output, attention_weights]))
-
-    preds = Dense(nb_classes, activation='softmax')(output)
-    model = Model(inputs=[input], outputs=preds)
-    from keras import optimizers
-    optim = optimizers.adam(lr=0.0001)
-    # optim = optimizers.sgd(lr=0.001)
-    model.compile(
-        loss='kld',
-        optimizer=optim,
-        metrics=['acc']
-    )
-    return model
-
+from Scripts.SGDModel import cnn_bilstm_model
 from transcript_gene_data import Gene_Wrapper
+from keras.preprocessing.sequence import pad_sequences
 
 batch_size = 256
 nb_classes = 4
@@ -134,6 +63,7 @@ class CSVLogger:
         del self.writer
         self.log_file.close()
 
+
 def label_dist(dist):
     assert (len(dist) == 4)
     return np.array(dist) / np.sum(dist)
@@ -148,6 +78,7 @@ encoding_seq = OrderedDict([
     ('T', [0, 0, 0, 1]),
     ('N', [0.25, 0.25, 0.25, 0.25]),  # A or C or G or T
 ])
+
 encoding_annotation = OrderedDict([
     ('UNK', [0, 0, 0, 0, 0, 0]),  # for padding use
     ('f', [1, 0, 0, 0, 0, 0]),  # 'dangling start',
@@ -163,32 +94,38 @@ seq_encoding_vectors = np.array(list(encoding_seq.values()))
 annotation_encoding_keys = list(encoding_annotation.keys())
 annotation_encoding_vectors = np.array(list(encoding_annotation.values()))
 
-gene_data = Gene_Wrapper.seq_data_loader(False, 'cefra-seq', 0, np.inf)
+gene_data = Gene_Wrapper.seq_data_loader(False, False, 0, 4000)
 encoding_keys = seq_encoding_keys
 encoding_vectors = seq_encoding_vectors
-X = np.array([np.array([encoding_keys.index(c) for c in gene.seq]) for gene in gene_data])
-Y = np.array([label_dist(gene.dist) for gene in gene_data])
+X = pad_sequences([[encoding_keys.index(c) for c in gene.seq] for gene in gene_data],
+                  maxlen=4000,
+                  dtype=np.int8, value=encoding_keys.index('UNK'))  # , truncating='post')
+y = np.array([label_dist(gene.dist) for gene in gene_data])
 ids = np.array([gene.id for gene in gene_data])
-true_length_all = np.array([len(gene.seq) for gene in gene_data])
+true_length = np.array([len(gene.seq) for gene in gene_data])
 
 if args.saved_expr == "":
     print('New experiment')
-    OUTPATH = os.path.join(basedir, 'Results', 'SGDModel-10foldcv', 'cefra-seq',
-                          str(datetime.datetime.now()).split('.')[0].replace(':', '-').replace(' ', '-')+ '-mask-test-{}'.format(args.mask_window) + '/')
+    OUTPATH = os.path.join(basedir, 'Results', 'cefra-seq', 'SGDModel-10foldcv',
+                           'mask-test-{}-'.format(args.mask_window) + str(datetime.datetime.now()).
+                           split('.')[0].replace(':', '-').replace(' ', '-') + '/')
     if not os.path.exists(OUTPATH):
         os.makedirs(OUTPATH)
 else:
     OUTPATH = args.saved_expr
     if not os.path.exists(OUTPATH):
         raise Exception('{} doesn\'t exists'.format(OUTPATH))
-    # if 'mask-test' in OUTPATH:
-    #     s = OUTPATH.split('-')[2]
-    #     s = float(s)
-    #     if s != args.mask_window:
-    #         raise Exception(
-    #             'Mask window size specified to this program is different from what has been used in the saved experiment.')
-    # else:
-    #     raise Exception('Saved experiment folder not reocognized.')
+    if 'mask-test' in OUTPATH:
+        s = OUTPATH[OUTPATH.index('mask-test-') + len('mask-test-'):].split('-')[0]
+        s = float(s)
+        if s == 2018:
+            raise Warning(
+                'Mask window size for saved experiment is not clear. Are you sure the mask window size agrees?')
+        elif s != args.mask_window:
+            raise Exception(
+                'Mask window size specified to this program is different from what has been used in the saved experiment.')
+    else:
+        raise Exception('Saved experiment folder not reocognized.')
 
 MAT_OUTPATH = os.path.join(OUTPATH, 'matrices')
 SG_OUTPATH = os.path.join(OUTPATH, 'summary_graphs_' + str(datetime.datetime.now()).
@@ -205,11 +142,11 @@ print('OUTPATH:', OUTPATH)
 
 '''load model'''
 model = cnn_bilstm_model()
-model.load_weights(os.path.join(basedir, 'Results', 'SGDModel-10foldcv', 'cefra-seq', '2019-01-08-11-14-51-cnn_bilstm-adam', 'weights_fold_0'))
+model.load_weights(os.path.join(basedir, 'Results/SGDModel-10foldcv/cefra-seq/2019-01-08-11-14-51-cnn_bilstm-adam/weights_fold_0.h5'))
 
 '''loading conservation scores'''
 print('Loading conservation scores')
-path_to_conservation_scores = os.path.join(basedir, 'Transcript_Coordinates_Mapping', 'all_conservation_scores.txt')
+path_to_conservation_scores = os.path.join(basedir, 'Transcript_Coordinates_Mapping/all_conservation_scores.txt')
 conserv_scores_dict = {}
 genome_to_trans_id_mapping = {}
 with open(path_to_conservation_scores, 'r') as conserv_scores_f:
@@ -219,15 +156,16 @@ with open(path_to_conservation_scores, 'r') as conserv_scores_f:
             genome_id = tokens[1].split(':')[1]
             trans_id = tokens[2].split(':')[1]
         else:
-            scores = line.rstrip().split(',')
+            scores = line.rstrip().split(',')[-4000:]
             scores = [float(score) if score != 'n/a' else 0. for score in scores]
-            scores = np.concatenate([[0.] * (true_length_all[np.where(ids==genome_id)] - len(scores)), scores])
+            act_len = len(scores)  # maximum set to 4000
+            scores = np.concatenate([[0.] * (4000 - act_len), scores])
             conserv_scores_dict[genome_id] = scores
             genome_to_trans_id_mapping[genome_id] = trans_id
 print('Finished')
 
 '''function to get the length of 3'UTR'''
-exon_ref_path = os.path.join(basedir, 'Transcript_Coordinates_Mapping', 'lib', 'exon_reference_human_processed.tsv')
+exon_ref_path = os.path.join(basedir, 'Transcript_Coordinates_Mapping/lib/exon_reference_human_processed.tsv')
 import pandas as pd
 
 exon_ref_pd = pd.read_csv(exon_ref_path, sep="\t",
@@ -300,7 +238,7 @@ if args.export_zipcodes:  # we only export zipcodes at a particular threshold
         os.path.join(SG_OUTPATH, 'non_overlapping_zipcodes_{:4f}.fa'.format(args.kl_sig)), 'w')
     unioned_zipcodes_file = open(os.path.join(SG_OUTPATH, 'unioned_zipcodes_{:4f}.fa'.format(args.kl_sig)), 'w')
 
-for i, (id, true_length, x, y) in enumerate(zip(ids, true_length_all, X, Y)):
+for i, (id, true_length, x, y) in enumerate(zip(reversed(ids), reversed(true_length), reversed(X), reversed(y))):
 
     original_predict = model.predict(x.reshape(1, -1)).reshape(-1, )
     utr3_length = get_utr3_length(genome_to_trans_id_mapping[id])
@@ -311,9 +249,12 @@ for i, (id, true_length, x, y) in enumerate(zip(ids, true_length_all, X, Y)):
         if true length is strictly smaller than 4000, then utr'3 should be smaller than true length;
         if true legnth is 4000, then it's probable that utr'3 legnth is higher than 4000.
         '''
-        indicator_length = utr3_length
+        if true_length < utr3_length:
+            indicator_length = true_length  # limit the 3'utr length within the 4000 interval
+        else:
+            indicator_length = utr3_length
 
-        true_starting_index = true_length - indicator_length
+        true_starting_index = 4000 - indicator_length
 
         if os.path.exists(os.path.join(MAT_OUTPATH, '{0}_{1}_{2}.npy'.format(id, true_length, utr3_length))):
             print('Loading existing {0}_{1}_{2}.npy'.format(id, true_length, utr3_length))
@@ -353,9 +294,9 @@ for i, (id, true_length, x, y) in enumerate(zip(ids, true_length_all, X, Y)):
             fig, axes = plt.subplots(nrows=5, ncols=1, figsize=(10, 20), sharex='all')
 
             '''interpolate the attention of time steps 440 back to the original sequence of length 4000'''
-            attention = (K.function([K.learning_phase()] + [model.inputs[0]], [model.layers[18].output])([0] + [x.reshape(1, -1)]))[0].reshape(-1)
-            attention_steps = [int(i * (true_length-1)/ (len(attention) - 1)) for i in range(len(attention))]
-            interpolated_attention = interp.InterpolatedUnivariateSpline(attention_steps, attention)(np.arange(0, true_length))
+            attention = model.get_attention(x.reshape(1, -1))[0].reshape(-1)
+            attention_steps = [int(i * 3999 / 439) for i in range(len(attention))]
+            interpolated_attention = interp.InterpolatedUnivariateSpline(attention_steps, attention)(np.arange(0, 4000))
             indicated_attention = interpolated_attention[-indicator_length:]
             axes[0].set_title(id)
             axes[0].set_ylabel('Singular ATT')
@@ -372,17 +313,17 @@ for i, (id, true_length, x, y) in enumerate(zip(ids, true_length_all, X, Y)):
 
             '''begin mask test'''
             '''optimize these codes to form a batch'''
-            true_starting_index = true_length - indicator_length
+            true_starting_index = 4000 - indicator_length
             averaged_scores = []
             averaged_att = []
             kl_distance = []
             tmp = []
-            for i in range(true_length - true_starting_index):
+            for i in range(4000 - true_starting_index):
                 x_ = x.copy()
-                if true_starting_index + i + mask_window_size // 2 < true_length:
+                if true_starting_index + i + mask_window_size // 2 < 4000:
                     effective_right = mask_window_size // 2
                 else:
-                    effective_right = true_length - true_starting_index - i
+                    effective_right = 4000 - true_starting_index - i
                 if true_starting_index + i - mask_window_size // 2 > 0:
                     effective_left = mask_window_size // 2
                 else:
@@ -491,10 +432,10 @@ for i, (id, true_length, x, y) in enumerate(zip(ids, true_length_all, X, Y)):
 
 
             for i in non_overlapping_indices:
-                if true_starting_index + i + mask_window_size // 2 < true_length:
+                if true_starting_index + i + mask_window_size // 2 < 4000:
                     effective_right = mask_window_size // 2
                 else:
-                    effective_right = true_length - true_starting_index - i
+                    effective_right = 4000 - true_starting_index - i
                 if true_starting_index + i - mask_window_size // 2 > 0:
                     effective_left = mask_window_size // 2
                 else:
@@ -541,10 +482,10 @@ for i, (id, true_length, x, y) in enumerate(zip(ids, true_length_all, X, Y)):
                 for index in int_kl_indices[1:]:
                     if index > post + mask_window_size:
                         # consecutive from pre to post
-                        if true_starting_index + post + mask_window_size // 2 < true_length:
+                        if true_starting_index + post + mask_window_size // 2 < 4000:
                             effective_right = mask_window_size // 2
                         else:
-                            effective_right = true_length - true_starting_index - post
+                            effective_right = 4000 - true_starting_index - post
                         if true_starting_index + pre - mask_window_size // 2 > 0:
                             effective_left = mask_window_size // 2
                         else:
@@ -626,6 +567,7 @@ for thresholding in sorted(kl_threshold):
     above_mean, below_mean = np.mean(above_kl_threshold[thresholding]), np.mean(below_kl_threshold[thresholding])
     pos_np_mean, neg_np_mean = np.mean(positive_zipcodes_np[thresholding]), np.mean(negative_zipcodes_np[thresholding])
     pos_unioned_mean, neg_unioned_mean = np.mean(positive_zipcodes_unioned[thresholding]), np.mean(negative_zipcodes_unioned[thresholding])
+
     '''ALL cs above and below kl cutoff'''
     fig = plt.figure(figsize=(10, 10))
     plt.title('KL cutoff at {:4f}'.format(thresholding))

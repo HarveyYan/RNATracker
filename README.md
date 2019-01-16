@@ -19,10 +19,10 @@ I find this survey extremely helpful.
 
 Other emerging read-mapping technologies investigating subcellular zipcode proximity might provide additional dataset. 
 
-## Software dependencies
+## Software dependency
 
-[Keras](https://github.com/keras-team/keras) Version 2.0.9 is recommeneded. The idea
- can be easily adapted to other deep leaing frameworks such as Tensorflow or PyTorch. 
+[Keras](https://github.com/keras-team/keras) version 2.0.9 is recommeneded. The idea
+ can be easily adapted to other deep leaing frameworks such as tensorflow and pyTorch. 
 
 RNAplfold and forgi libraries from the [ViennaRNA package](https://www.tbi.univie.ac.at/RNA/) and their python wrapper [Eden](https://github.com/fabriziocosta/EDeN) for acquiring RNA secondary annotations.
 
@@ -30,7 +30,7 @@ RNAplfold and forgi libraries from the [ViennaRNA package](https://www.tbi.univi
 
 [Weblogo](https://weblogo.berkeley.edu/logo.cgi) and its python wrapper [Basset](https://github.com/davek44/Basset) for visualizing learned motifs.
 
-## Run the codes
+## Running the codes
 
 - Scripts/RNATracker.py<br></br>
     - Main experiment entry<br></br>

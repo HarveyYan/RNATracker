@@ -324,7 +324,7 @@ def compare_roc(label_and_pred_dirs, legends, savetofile, title='Title'):
     # labels = [np.load(label_file) for label_file in label_dirs]
     # predicts = [np.load(predict_file) for predict_file in predicts]
 
-    plt.figure(figsize=(10, 10))
+    plt.figure(figsize=(12, 12))
     plt.title(title)
     plt.plot([0, 1], [0, 1], 'k--')
 
@@ -341,13 +341,13 @@ def compare_roc(label_and_pred_dirs, legends, savetofile, title='Title'):
         fpr, tpr, _ = roc_curve(y_label.ravel(), y_predict.ravel())
         roc_auc = auc(fpr, tpr)
 
-        plt.plot(fpr, tpr, label='{0} (AUC={1:0.3f})'.format(legend, roc_auc))
+        plt.plot(fpr, tpr, label='{0} ({1:0.3f})'.format(legend, roc_auc))
 
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
     plt.xlabel('FPR')
     plt.ylabel('TPR')
-    plt.legend(loc="lower right")
+    plt.legend(loc="lower right", fontsize='26')
     plt.savefig(savetofile)
 
 
@@ -376,7 +376,7 @@ def compare_pr(label_and_pred_dirs, legends, savetofile, title='Title'):
     # labels = [np.load(label_file) for label_file in labels]
     # predicts = [np.load(predict_file) for predict_file in predicts]
 
-    plt.figure(figsize=(10, 10))
+    plt.figure(figsize=(12, 12))
     plt.title(title)
 
     for y_label, y_predict, legend in zip(labels, predicts, legends):
@@ -393,17 +393,17 @@ def compare_pr(label_and_pred_dirs, legends, savetofile, title='Title'):
         average_precision = average_precision_score(y_label, y_predict,
                                                     average="micro")
 
-        plt.plot(recall, precision, label='{0} (AUC={1:0.3f})'.format(legend, average_precision))
+        plt.plot(recall, precision, label='{0} ({1:0.3f})'.format(legend, average_precision))
 
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
     plt.xlabel('Recall')
     plt.ylabel('Precision')
-    plt.legend(loc="upper right")
+    plt.legend(loc="upper right", fontsize='26')
     plt.savefig(savetofile)
 
 
-def multiclass_roc(model_out_dir, savetofile, title='', locations=("Cytoplasm", "Insoluble", "Membrane", "Nuclear")):
+def multiclass_roc(model_out_dir, savetofile, title='', locations=("cytosol", "insoluble", "membrane", "nucleus")):
     """
     To evaluate a single model's performance on four different locations, i.e.
     to compare ROC curves of different locations of a single model.
@@ -440,12 +440,12 @@ def multiclass_roc(model_out_dir, savetofile, title='', locations=("Cytoplasm", 
         fpr[i], tpr[i], _ = roc_curve(y_label[:, i], y_predict[:, i])
         roc_auc[i] = auc(fpr[i], tpr[i])
 
-    plt.figure(figsize=(10, 10))
+    plt.figure(figsize=(12, 12))
     from itertools import cycle
     colors = cycle(['aqua', 'darkorange', 'cornflowerblue', 'green'])
     for i, color in zip(range(n_classes), colors):
         plt.plot(fpr[i], tpr[i], color=color,
-                 label='{0} (AUC = {1:0.3f})'
+                 label='{0} ({1:0.3f})'
                        ''.format(locations[i], roc_auc[i]))
     plt.plot([0, 1], [0, 1], 'k--')
     plt.xlim([0.0, 1.0])
@@ -457,7 +457,7 @@ def multiclass_roc(model_out_dir, savetofile, title='', locations=("Cytoplasm", 
     plt.savefig(savetofile)
 
 
-def multiclass_pr(model_out_dir, savetofile, title='', locations=("Cytoplasm", "Insoluble", "Membrane", "Nuclear")):
+def multiclass_pr(model_out_dir, savetofile, title='', locations=("cytosol", "insoluble", "membrane", "nucleus")):
     '''assemble labels from different folds'''
     y_label = []
     for kfold_index in range(10):
@@ -490,11 +490,11 @@ def multiclass_pr(model_out_dir, savetofile, title='', locations=("Cytoplasm", "
                                                             y_predict[:, i])
         average_precision[i] = average_precision_score(y_label[:, i], y_predict[:, i])
 
-    plt.figure(figsize=(10, 10))
+    plt.figure(figsize=(12, 12))
 
     for i, color in zip(range(n_classes), colors):
         plt.plot(recall[i], precision[i], color=color,
-                 label='{0} (AUC = {1:0.3f})'.format(locations[i], average_precision[i]))
+                 label='{0} ({1:0.3f})'.format(locations[i], average_precision[i]))
 
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
@@ -553,16 +553,17 @@ def violin_plot(dataset):
         ax.set_xlim(0.25, len(labels) + 0.75)
         ax.set_ylabel('Localization values')
 
-    fig = plt.figure(figsize=(10, 10))
+    fig = plt.figure(figsize=(12, 12))
     plt.violinplot([y[:, i] for i in range(4)], showmeans=True)
     ax = fig.axes[0]
     if dataset == "cefra-seq":
-        locations = ["cytoplasm", "insoluble", "membrane", "nucleus"]
+        locations = ["cytosol", "insoluble", "membrane", "nucleus"]
     elif dataset == "apex-rip":
         locations = ['KDEL', 'Mito', 'NES', 'NLS']
     else:
         raise RuntimeError('No such dataset')
     set_axis_style(ax, locations)
+    plt.xticks(rotation=-20)
     plt.savefig('Graph/violin_{}.png'.format(dataset))
 
 
@@ -575,80 +576,80 @@ if __name__ == "__main__":
 
     plt.style.use('ggplot')
     matplotlib.rcParams.update(
-        {'font.family': 'Times New Roman', 'font.size': 18, 'font.weight': 'light', 'figure.dpi': 350})
-    violin_plot('cefra-seq')
-    violin_plot('apex-rip')
+        {'font.family': 'Times New Roman', 'font.size': 36, 'font.weight': 'light', 'figure.dpi': 350})
+    # violin_plot('cefra-seq')
+    # violin_plot('apex-rip')
 
     '''cefra-seq'''
     compare_roc([
         './Results/SGDModel-10foldcv/cefra-seq/2019-01-08-11-14-51-cnn_bilstm-adam/',
         './Results/SGDModel-10foldcv/cefra-seq/2018-12-28-18-03-18-cnn-four-cnn/',
-        './Results/kmer-baseline-10foldcv/cefra-seq/2018-12-21-16-59-37-LR-5Mer-cefra-seq/',
-        './Results/kmer-baseline-10foldcv/cefra-seq/2018-12-21-16-09-27-NN-5Mer-cefra-seq/',
         './Results/RNATracker-10foldcv/cefra-seq/2018-08-17-18-20-51-new_split/',
         './Results/RNATracker-10foldcv/cefra-seq/2018-08-18-19-08-14-new_split_no_attention/',
         './Results/SeparateEncoding-10foldcv/cefra-seq/2018-08-17-00-30-17-no-bn/',
-        './Results/RNATracker-10foldcv/cefra-seq/2018-08-18-18-52-51-new_split_ann_joint_encoding/',],
-        ['RNATracker-FullLength', 'NoLSTM', 'LR-5Mer', 'NN-5Mer', 'RNATracker-FixedLength', 'NoAttention', 'Seq+Struct',
-         'SeqxStruct']
+        './Results/RNATracker-10foldcv/cefra-seq/2018-08-18-18-52-51-new_split_ann_joint_encoding/',
+        './Results/kmer-baseline-10foldcv/cefra-seq/2018-12-21-16-09-27-NN-5Mer-cefra-seq/',
+        './Results/kmer-baseline-10foldcv/cefra-seq/2018-12-21-16-59-37-LR-5Mer-cefra-seq/',],
+        ['RNATracker-FullLength', 'NoLSTM', 'RNATracker-FixedLength', 'NoAttention', 'Seq+Struct',
+         'SeqxStruct', 'NN-5Mer', 'LR-5Mer']
         , './Graph/cefra-seq-10foldcv-compare-roc.png',
         title='Micro-averaged ROC')
 
     compare_pr([
         './Results/SGDModel-10foldcv/cefra-seq/2019-01-08-11-14-51-cnn_bilstm-adam/',
         './Results/SGDModel-10foldcv/cefra-seq/2018-12-28-18-03-18-cnn-four-cnn/',
-        './Results/kmer-baseline-10foldcv/cefra-seq/2018-12-21-16-59-37-LR-5Mer-cefra-seq/',
-        './Results/kmer-baseline-10foldcv/cefra-seq/2018-12-21-16-09-27-NN-5Mer-cefra-seq/',
         './Results/RNATracker-10foldcv/cefra-seq/2018-08-17-18-20-51-new_split/',
         './Results/RNATracker-10foldcv/cefra-seq/2018-08-18-19-08-14-new_split_no_attention/',
         './Results/SeparateEncoding-10foldcv/cefra-seq/2018-08-17-00-30-17-no-bn/',
-        './Results/RNATracker-10foldcv/cefra-seq/2018-08-18-18-52-51-new_split_ann_joint_encoding/',],
-        ['RNATracker-FullLength', 'NoLSTM', 'LR-5Mer', 'NN-5Mer', 'RNATracker-FixedLength', 'NoAttention', 'Seq+Struct',
-         'SeqxStruct']
+        './Results/RNATracker-10foldcv/cefra-seq/2018-08-18-18-52-51-new_split_ann_joint_encoding/',
+        './Results/kmer-baseline-10foldcv/cefra-seq/2018-12-21-16-09-27-NN-5Mer-cefra-seq/',
+        './Results/kmer-baseline-10foldcv/cefra-seq/2018-12-21-16-59-37-LR-5Mer-cefra-seq/',],
+        ['RNATracker-FullLength', 'NoLSTM', 'RNATracker-FixedLength', 'NoAttention', 'Seq+Struct',
+         'SeqxStruct', 'NN-5Mer', 'LR-5Mer']
         , './Graph/cefra-seq-10foldcv-compare-pr.png',
         title='Micro-averaged PR')
 
     multiclass_roc('./Results/SGDModel-10foldcv/cefra-seq/2019-01-08-11-14-51-cnn_bilstm-adam/',
-                   './Graph/RNATracker-cefra-seq-roc.png', title='ROC by location for RNATracker-FullLength')
+                   './Graph/RNATracker-cefra-seq-roc.png', title='ROC by fraction')
 
     multiclass_pr('./Results/SGDModel-10foldcv/cefra-seq/2019-01-08-11-14-51-cnn_bilstm-adam/',
-                  './Graph/RNATracker-cefra-seq-pr.png', title='PR by location for RNATracker-FullLength')
+                  './Graph/RNATracker-cefra-seq-pr.png', title='PR by fraction')
 
     '''apex-rip'''
     compare_roc([
         './Results/SGDModel-10foldcv/apex-rip/2019-01-04-16-36-23-cnn_bilstm-adam/',
         './Results/SGDModel-10foldcv/apex-rip/2018-12-22-22-00-37-cnn-four-cnn/',
-        './Results/kmer-baseline-10foldcv/apex-rip/2018-12-21-16-57-54-LR-5Mer-apex-rip/',
-        './Results/kmer-baseline-10foldcv/apex-rip/2018-12-21-16-25-32-NN-5Mer-apex-rip/',
         './Results/RNATracker-10foldcv/apex-rip/2018-12-20-19-31-47-apex-rip-no-reg/',
         './Results/RNATracker-10foldcv/apex-rip/2018-12-21-17-32-22-no_att/',
         './Results/SeparateEncoding-10foldcv/apex-rip/2018-12-23-23-12-54/',
-        './Results/RNATracker-10foldcv/apex-rip/2018-12-22-11-35-50-apex-rip-with-annotations/',],
-        ['RNATracker-FullLength', 'NoLSTM', 'LR-5Mer', 'NN-5Mer', 'RNATracker-FixedLength', 'NoAttention', 'Seq+Struct',
-         'SeqxStruct']
+        './Results/RNATracker-10foldcv/apex-rip/2018-12-22-11-35-50-apex-rip-with-annotations/',
+        './Results/kmer-baseline-10foldcv/apex-rip/2018-12-21-16-25-32-NN-5Mer-apex-rip/',
+        './Results/kmer-baseline-10foldcv/apex-rip/2018-12-21-16-57-54-LR-5Mer-apex-rip/',],
+        ['RNATracker-FullLength', 'NoLSTM', 'RNATracker-FixedLength', 'NoAttention', 'Seq+Struct',
+         'SeqxStruct', 'NN-5Mer', 'LR-5Mer']
         , './Graph/apex-rip-10foldcv-compare-roc.png',
         title='Micro-averaged ROC')
 
     compare_pr([
         './Results/SGDModel-10foldcv/apex-rip/2019-01-04-16-36-23-cnn_bilstm-adam/',
         './Results/SGDModel-10foldcv/apex-rip/2018-12-22-22-00-37-cnn-four-cnn/',
-        './Results/kmer-baseline-10foldcv/apex-rip/2018-12-21-16-57-54-LR-5Mer-apex-rip/',
-        './Results/kmer-baseline-10foldcv/apex-rip/2018-12-21-16-25-32-NN-5Mer-apex-rip/',
         './Results/RNATracker-10foldcv/apex-rip/2018-12-20-19-31-47-apex-rip-no-reg/',
         './Results/RNATracker-10foldcv/apex-rip/2018-12-21-17-32-22-no_att/',
         './Results/SeparateEncoding-10foldcv/apex-rip/2018-12-23-23-12-54/',
-        './Results/RNATracker-10foldcv/apex-rip/2018-12-22-11-35-50-apex-rip-with-annotations/',],
-        ['RNATracker-FullLength', 'NoLSTM', 'LR-5Mer', 'NN-5Mer', 'RNATracker-FixedLength', 'NoAttention', 'Seq+Struct',
-         'SeqxStruct']
+        './Results/RNATracker-10foldcv/apex-rip/2018-12-22-11-35-50-apex-rip-with-annotations/',
+        './Results/kmer-baseline-10foldcv/apex-rip/2018-12-21-16-25-32-NN-5Mer-apex-rip/',
+        './Results/kmer-baseline-10foldcv/apex-rip/2018-12-21-16-57-54-LR-5Mer-apex-rip/',],
+        ['RNATracker-FullLength', 'NoLSTM', 'RNATracker-FixedLength', 'NoAttention', 'Seq+Struct',
+         'SeqxStruct', 'NN-5Mer', 'LR-5Mer']
         , './Graph/apex-rip-10foldcv-compare-pr.png',
         title='Micro-averaged PR')
 
     multiclass_roc('./Results/SGDModel-10foldcv/apex-rip/2019-01-04-16-36-23-cnn_bilstm-adam/',
-                   './Graph/RNATracker-apex-rip-roc.png', title='ROC by location for RNATracker-FullLength',
+                   './Graph/RNATracker-apex-rip-roc.png', title='ROC by fraction',
                    locations=['KDEL', 'Mito', 'NES', 'NCL'])
 
     multiclass_pr('./Results/SGDModel-10foldcv/apex-rip/2019-01-04-16-36-23-cnn_bilstm-adam/',
-                  './Graph/RNATracker-apex-rip-pr.png', title='PR by location for RNATracker-FullLength',
+                  './Graph/RNATracker-apex-rip-pr.png', title='PR by fraction',
                   locations=['KDEL', 'Mito', 'NES', 'NCL'])
 
     '''new cDNA data batch, a little bit better'''

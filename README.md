@@ -22,7 +22,7 @@ Other emerging read-mapping technologies investigating subcellular zipcode proxi
 ## Software dependency
 
 [Keras](https://github.com/keras-team/keras) version 2.0.9 is recommeneded. The idea
- can be easily adapted to other deep leaing frameworks such as tensorflow and pyTorch. 
+ can be easily adapted to other deep leaing frameworks such as Tensorflow and PyTorch. 
 
 RNAplfold and forgi libraries from the [ViennaRNA package](https://www.tbi.univie.ac.at/RNA/) and their python wrapper [Eden](https://github.com/fabriziocosta/EDeN) for acquiring RNA secondary annotations.
 

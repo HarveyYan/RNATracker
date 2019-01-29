@@ -110,6 +110,7 @@ def neural_net_baseline(dataset):
         '''assemble a baseline model'''
         dim = X.shape[1]
         input = Input(shape=(dim,))
+        input = Dense(dim)(input)
         preds = Dense(nb_classes, activation='softmax')(input)
         model = Model(inputs=[input], outputs=preds)
         model.compile(

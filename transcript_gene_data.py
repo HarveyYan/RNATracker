@@ -407,4 +407,11 @@ if __name__ == "__main__":
     import Scripts.RNATracker
     Scripts.RNATracker.OUTPATH = './Graph/'
     train_data_label = [gene.dist for gene in data]
-    Scripts.RNATracker.mode_frequency(data, train_data_label, '', ['KDEL', 'Mito', 'NES', 'NCL'])
+    Scripts.RNATracker.mode_frequency(data, train_data_label, 'mode-freq-apex-rip', ['KDEL', 'Mito', 'NES', 'NCL'])
+
+    data = Gene_Wrapper.seq_data_loader(True, 'cefra-seq')
+    import Scripts.RNATracker
+
+    Scripts.RNATracker.OUTPATH = './Graph/'
+    train_data_label = [gene.dist for gene in data]
+    Scripts.RNATracker.mode_frequency(data, train_data_label, 'mode-freq-cefra-seq', ['cytosol', 'insoluble', 'membrane', 'nucleus'])

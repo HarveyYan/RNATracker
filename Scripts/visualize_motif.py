@@ -15,10 +15,10 @@ from sklearn import preprocessing
 import seaborn as sns
 import pandas as pd
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 plt.style.use('ggplot')
 matplotlib.rcParams.update(
-    {'font.family': 'Times New Roman', 'font.size': 18, 'font.weight': 'light', 'figure.dpi': 350})
+    {'font.family': 'Times New Roman', 'font.size': 12, 'font.weight': 'light', 'figure.dpi': 350})
 weblogo_opts = '-X NO --fineprint "" --resolution "350" --format "PNG"'
 weblogo_opts += ' -C "#CB2026" A A'
 weblogo_opts += ' -C "#34459C" C C'
@@ -50,8 +50,10 @@ gpu_options.allow_growth = True
 config = tf.ConfigProto(gpu_options=gpu_options)
 
 from keras.backend.tensorflow_backend import set_session
+
 set_session(tf.Session(config=config))
 np.random.seed(1234)
+
 
 def label_dist(dist):
     '''
@@ -61,6 +63,7 @@ def label_dist(dist):
     '''
     assert (len(dist) == 4)
     return np.array(dist) / np.sum(dist)
+
 
 encoding_seq = OrderedDict([
     ('UNK', [0, 0, 0, 0]),
@@ -83,6 +86,7 @@ gene_data = Gene_Wrapper.seq_data_loader(False, 'cefra-seq', 0, np.inf)
 
 X = np.array([np.array([encoding_keys.index(c) for c in gene.seq]) for gene in gene_data])
 Y = np.array([label_dist(gene.dist) for gene in gene_data])
+
 
 def cnn_bilstm_model(pooling_size=3, nb_filters=32, filters_length=10, lstm_units=32, attention_size=50):
     '''build model'''
@@ -151,6 +155,7 @@ def cnn_bilstm_model(pooling_size=3, nb_filters=32, filters_length=10, lstm_unit
     )
     return model
 
+
 OUTPATH = os.path.join(basedir, 'Results', 'SGDModel-10foldcv', 'cefra-seq', str(datetime.datetime.now()).
                        split('.')[0].replace(':', '-').replace(' ', '-') + '-visualize-motif/')
 if not os.path.exists(OUTPATH):
@@ -159,9 +164,12 @@ print('OUTPATH:', OUTPATH)
 
 '''load model'''
 model = cnn_bilstm_model()
-model.load_weights(os.path.join(basedir, 'Results', 'SGDModel-10foldcv', 'cefra-seq', '2019-01-08-11-14-51-cnn_bilstm-adam', 'weights_fold_0'))
+model.load_weights(
+    os.path.join(basedir, 'Results', 'SGDModel-10foldcv', 'cefra-seq', '2019-01-08-11-14-51-cnn_bilstm-adam',
+                 'weights_fold_0'))
 
-def new_motif_location_PCC(filter_outs, labels, locations=('cytoplasm', 'insoluble', 'membrane', 'nuclear')):
+
+def new_motif_location_PCC(filter_outs, labels, locations=('cytosol', 'insoluble', 'membrane', 'nuclear')):
     assert (labels.shape == (len(filter_outs), len(locations)))
     log_file = open(OUTPATH + 'pcorr.csv', 'w')
     fieldnames = []
@@ -171,20 +179,23 @@ def new_motif_location_PCC(filter_outs, labels, locations=('cytoplasm', 'insolub
     writer.writeheader()
 
     corr_mat = []
-    for i in range(32): # per filter
-        print('filter %d'%i)
-        preds = []
-        for j in tqdm(range(len(filter_outs))): # per sequence with shape [1, length, 32]
-            dum = np.zeros(filter_outs[j].shape)
-            dum[:,:,i] = filter_outs[j][:,:,i] # per seq per filter
+    all_preds = []
+    for j in tqdm(range(len(filter_outs))):  # per sequence with shape [1, length, 32]
+        all_dum = []
+        for i in range(32):  # per filter
+            dum = np.zeros(filter_outs[j].shape).astype(np.float32)
+            dum[:, :, i] = filter_outs[j][:, :, i]  # per seq per filter
+            all_dum.append(dum)
+        all_dum = np.concatenate(all_dum, axis=0)
+        all_preds.append(K.function([K.learning_phase()] + [model.layers[3].input], [model.output])([0] + [all_dum])[0][None,:,:]) # [32, 4]
 
-            preds.append(K.function([K.learning_phase()] + [model.layers[3].input], [model.output])([0]+[dum])[0])
-
-        preds = np.concatenate(preds, axis=0) # [1024, 4]
+    # all_preds [1024, 32, 4]
+    all_preds = np.concatenate(all_preds, axis=0)
+    for j in range(32):
         corr_row = []
         log = {}
         for i, loc in enumerate(locations):
-            corr, pval = stats.pearsonr(preds[:, i], labels[:, i])
+            corr, pval = stats.pearsonr(all_preds[:, j, i], labels[:, i])
             log[loc + '_corr'] = corr
             log[loc + '_pval'] = pval
             corr_row.append(corr)
@@ -200,13 +211,14 @@ def new_motif_location_PCC(filter_outs, labels, locations=('cytoplasm', 'insolub
     res = ax.imshow(np.array(corr_mat).T, cmap=plt.cm.jet,
                     interpolation='nearest')
     cb = fig.colorbar(res, orientation="horizontal")
-    plt.xticks(np.arange(len(filter_outs)), np.arange(len(filter_outs)))
+    plt.xticks(np.arange(32), np.arange(32))
     plt.yticks(np.arange(len(locations)), locations)
     for i, row in enumerate(np.array(corr_mat).T):
         for j, c in enumerate(row):
             plt.text(j - .3, i + .1, round(c, 2), fontsize=8)
 
     plt.savefig(OUTPATH + 'pcorr.png')
+
 
 def plot_filter_logo(filter_outs, filter_size, seqs, out_prefix, raw_t=0, maxpct_t=None):
     # acgt = 'ACGT'
@@ -222,10 +234,11 @@ def plot_filter_logo(filter_outs, filter_size, seqs, out_prefix, raw_t=0, maxpct
     # iter over samples
     for i in range(len(filter_outs)):
         # iter ans entire sequence
-        for j in range(4, len(filter_outs[i])-5):
+        for j in range(4, len(filter_outs[i]) - 5):
             if filter_outs[i][j] > raw_t:
                 # kmer = seqs[i][j:j + filter_size] # valid padding
-                kmer = seqs[i][j-4:j-4+filter_size] # same padding, always 4 padded to the left, 5 padded to the right
+                kmer = seqs[i][
+                       j - 4:j - 4 + filter_size]  # same padding, always 4 padded to the left, 5 padded to the right
                 if 'UNK' in kmer:
                     continue
                 if len(kmer) < filter_size:
@@ -241,6 +254,7 @@ def plot_filter_logo(filter_outs, filter_size, seqs, out_prefix, raw_t=0, maxpct
         weblogo_cmd = 'weblogo %s < %s.fa > %s.png' % (weblogo_opts, out_prefix, out_prefix)
         subprocess.call(weblogo_cmd, shell=True)
 
+
 def plot_filter_seq_heat(filter_outs, y_train, out_pdf, whiten=True, drop_dead=True):
     # compute filter output means per sequence per filter
     filter_seqs = []
@@ -248,7 +262,7 @@ def plot_filter_seq_heat(filter_outs, y_train, out_pdf, whiten=True, drop_dead=T
         # seq: [1, length, 32]
         tmp = []
         for j in range(32):
-            tmp.append(np.mean(seq[0,:,j]))
+            tmp.append(np.mean(seq[0, :, j]))
         filter_seqs.append(np.array(tmp))
     filter_seqs = np.array(filter_seqs)
 
@@ -269,7 +283,7 @@ def plot_filter_seq_heat(filter_outs, y_train, out_pdf, whiten=True, drop_dead=T
     hmin = np.percentile(filter_seqs[:, seqs_i], 0.1)
     hmax = np.percentile(filter_seqs[:, seqs_i], 99.9)
 
-    locations = ['cytoplasm', 'insolubles', 'membrane', 'nuclear']
+    locations = ['cytoplasm', 'insoluble', 'membrane', 'nuclear']
 
     '''classifiy'''
     y_train_ = list()
@@ -289,7 +303,7 @@ def plot_filter_seq_heat(filter_outs, y_train, out_pdf, whiten=True, drop_dead=T
               (0.5479999999999997, 0.09999999999999998, 0.9)]
     lut = dict(zip(set(y_train), colors))
     col_colors = pd.DataFrame(y_train)[0].map(lut)
-    g = sns.clustermap(filter_seqs[:, seqs_i], row_cluster=True, col_cluster=True, linewidths=0, figsize=(9,9),
+    g = sns.clustermap(filter_seqs[:, seqs_i], row_cluster=True, col_cluster=True, linewidths=0, figsize=(9, 9),
                        xticklabels=False, vmin=hmin, vmax=hmax, cmap='YlGnBu', col_colors=[col_colors], metric='cosine')
     '''re-ordered'''
     # print(y_train[g.dendrogram_col.reordered_ind])
@@ -299,11 +313,12 @@ def plot_filter_seq_heat(filter_outs, y_train, out_pdf, whiten=True, drop_dead=T
                                 label=label, linewidth=0)
         g.ax_col_dendrogram.legend(bbox_to_anchor=(0.8, 0.9), bbox_transform=plt.gcf().transFigure, ncol=4)
 
-    g.cax.set_position([.08, .2, .03, .45])
+    g.cax.set_position([.05, .2, .03, .45])
     plt.savefig(out_pdf, dpi=350)
     # out_png = out_pdf[:-2] + 'ng'
     # plt.savefig(out_png, dpi=300)
     plt.close()
+
 
 def get_motif(x_train, y_train):
     '''newer, straitified version, doesn't yield too much improvements'''
@@ -323,10 +338,13 @@ def get_motif(x_train, y_train):
 
     filter_outs = []
     for seq in x_train:
-        filter_outs.append(K.function([K.learning_phase()] + [model.inputs[0]], [model.layers[2].output])([0] + [seq.reshape(1,-1)])[0])
+        filter_outs.append(
+            K.function([K.learning_phase()] + [model.inputs[0]], [model.layers[2].output])([0] + [seq.reshape(1, -1)])[
+                0])
 
-    plot_filter_seq_heat(filter_outs, y_train, OUTPATH + 'clustering.png')
     new_motif_location_PCC(filter_outs, y_train)
+    plot_filter_seq_heat(filter_outs, y_train, OUTPATH + 'clustering.png')
+
 
     motif_size = 10
     # turn x_train back into symbols
@@ -339,8 +357,8 @@ def get_motif(x_train, y_train):
     for i in range(32):
         # draw motif logos learned from the filters
         per_filter_outs = []
-        for out in filter_outs: # [1, length, 32]
-            per_filter_outs.append(out[0,:,i])
+        for out in filter_outs:  # [1, length, 32]
+            per_filter_outs.append(out[0, :, i])
 
         plot_filter_logo(per_filter_outs, motif_size, x_train,
                          OUTPATH + 'motif_logos/filter{}_logo'.format(i), maxpct_t=0.5)

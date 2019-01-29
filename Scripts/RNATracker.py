@@ -76,7 +76,6 @@ def data_stats(longest, data):
     plt.pause(1)
     plt.close()
 
-
 def mode_frequency(train_data, labels, name, locations):
     '''
     returns a class weight to account for the fact that mode dist is highly unbalanced
@@ -90,16 +89,17 @@ def mode_frequency(train_data, labels, name, locations):
     for gene, dist in zip(train_data, labels):
         mode_freq[np.argmax(dist)] += 1
         length[np.argmax(dist)].append(len(gene.seq))
-    for i in range(nb_classes):
+    for i in range(4):
         length[i] = np.average(length[i])
-    plt.figure(figsize=(10, 10))
-    plt.title(name)
-    plt.xlabel('locations')
-    plt.ylabel('samples count')
+    plt.figure(figsize=(12, 12))
+    plt.ylabel('Transcript count / length(bp)')
+    plt.ylim(0, 6000)
     plt.bar(locations, mode_freq, label='sample counts',
             color='cornflowerblue')
     plt.plot(locations, length, label='average length')
-    plt.legend()
+    plt.xticks(rotation=-20)
+    plt.legend(loc="upper left")
+    plt.subplots_adjust(left=0.15)
     plt.savefig(OUTPATH + name + '.png')
 
     base = np.sum(mode_freq) / 4

@@ -13,7 +13,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from Scripts.RNATracker import preprocess_data
 plt.style.use('ggplot')
-matplotlib.rcParams.update({'font.family': 'Times New Roman', 'font.size': 18, 'font.weight': 'light', 'figure.dpi': 350})
+matplotlib.rcParams.update({'font.family': 'Times New Roman', 'font.size': 36, 'font.weight': 'light', 'figure.dpi': 350})
 
 def label_dist(dist):
     '''
@@ -76,22 +76,23 @@ def plot_scatter(expr_path, dataset, randomization_test=False):
     if dataset == 'apex-rip':
         locations = ['KDEL', 'Mito', 'NES', 'NLS']
     elif dataset == 'cefra-seq':
-        locations = ["cytoplasm", "insoluble", "membrane", "nucleus"]
+        locations = ["cytosol", "insoluble", "membrane", "nucleus"]
     else:
         raise RuntimeError('No such dataset.')
     figures = []
     for i, loc in enumerate(locations):
         '''True label - predicted label scatter'''
-        plt.figure(figsize=(10, 10))
+        plt.figure(figsize=(12, 12))
         plt.title(loc)
-        plt.xlabel('True label')
-        plt.ylabel('Predicted label')
+        plt.xlabel('True localization value')
+        plt.ylabel('Predicted localization value')
         plt.plot([0, 1], [0, 1], 'k--')
         plt.xlim([0.0, 1.0])
         plt.ylim([0.0, 1.05])
         corr, pval = stats.pearsonr(y_pred[:, i], y_test[:, i])
-        plt.scatter(y_test[:, i], y_pred[:, i], label='pearson corr: {0:0.3f}'.format(corr))
+        plt.scatter(y_test[:, i], y_pred[:, i], label='Pearson corr: {0:0.3f}'.format(corr))
         plt.legend()
+        plt.setp(plt.gca().get_legend().get_texts())  # legend 'list' fontsize
         plt.savefig(os.path.join(expr_path, 'scatter', loc + '_all_scatter.png'))
 
         '''short and long mRNA samples difference'''

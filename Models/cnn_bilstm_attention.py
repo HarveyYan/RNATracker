@@ -27,7 +27,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 plt.style.use('ggplot')
 matplotlib.rcParams.update(
-    {'font.family': 'Times New Roman', 'font.size': 18, 'font.weight': 'light', 'figure.dpi': 350})
+    {'font.family': 'Times New Roman', 'font.size': 36, 'font.weight': 'light', 'figure.dpi': 350})
 
 OUTPATH = None
 pretrained_model_score = [0.8, 0.62, 0.88, 0.89, 0.63, 0.94, 0.97, 0.94, 0.62, 0.89, 0.92,
